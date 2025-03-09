@@ -13,7 +13,7 @@ type G2 struct {
 	p *twistPoint
 }
 
-//Gen2 is the generator of G2.
+// Gen2 is the generator of G2.
 var Gen2 = &G2{twistGen}
 
 var g2GeneratorTable *[32 * 2]twistPointTable
@@ -203,35 +203,37 @@ func (e *G2) MarshalCompressed() []byte {
 
 // UnmarshalCompressed sets e to the result of converting the output of Marshal back into
 // a group element and then returns e.
-func (e *G2) UnmarshalCompressed(data []byte) ([]byte, error) {
+func (e *G2) UnmarshalCompressed(data []byte) error {
 	// Each value is a 256-bit number.
 	const numBytes = 256 / 8
-	if len(data) < 1+2*numBytes {
-		return nil, errors.New("sm9.G2: not enough data")
+	if len(data) < 2*numBytes {
+		return errors.New("sm9.G2: not enough data")
 	}
-	if data[0] != 2 && data[0] != 3 { // compressed form
-		return nil, errors.New("sm9.G2: invalid point compress byte")
-	}
+
 	var err error
 	// Unmarshal the points and check their caps
 	if e.p == nil {
 		e.p = &twistPoint{}
 	}
-	if err = e.p.x.x.Unmarshal(data[1:]); err != nil {
-		return nil, err
+	if err = e.p.x.x.Unmarshal(data[:numBytes]); err != nil {
+		return err
 	}
-	if err = e.p.x.y.Unmarshal(data[1+numBytes:]); err != nil {
-		return nil, err
+	if err = e.p.x.y.Unmarshal(data[numBytes:]); err != nil {
+		return err
 	}
+
 	montEncode(&e.p.x.x, &e.p.x.x)
 	montEncode(&e.p.x.y, &e.p.x.y)
+
 	x3 := e.p.polynomial(&e.p.x)
 	e.p.y.Sqrt(x3)
 	x3y := &gfP{}
+
 	montDecode(x3y, &e.p.y.y)
-	if byte(x3y[0]&1) != data[0]&1 {
+
+	/*if byte(x3y[0]&1) != data[0]&1 {
 		e.p.y.Neg(&e.p.y)
-	}
+	}*/
 	if e.p.x.IsZero() && e.p.y.IsZero() {
 		// This is the point at infinity.
 		e.p.y.SetOne()
@@ -242,10 +244,10 @@ func (e *G2) UnmarshalCompressed(data []byte) ([]byte, error) {
 		e.p.t.SetOne()
 
 		if !e.p.IsOnCurve() {
-			return nil, errors.New("sm9.G2: malformed point")
+			return errors.New("sm9.G2: malformed point")
 		}
 	}
-	return data[1+2*numBytes:], nil
+	return nil
 }
 
 func (e *G2) fillBytes(buffer []byte) {
