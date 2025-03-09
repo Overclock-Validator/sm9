@@ -233,7 +233,7 @@ func (e *G2) UnmarshalCompressed(data []byte) error {
 	montDecode(&e.p.y.x, &e.p.y.x)
 
 	//if byte(e.p.y.y[0]&1) != data[0]&1 {
-	e.p.y.Neg(&e.p.y)
+	//e.p.y.Neg(&e.p.y)
 	//}
 
 	if e.p.x.IsZero() && e.p.y.IsZero() {
