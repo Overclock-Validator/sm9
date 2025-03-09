@@ -1,4 +1,4 @@
-module github.com/emmansun/sm9
+module github.com/Overclock-Validator/sm9
 
 go 1.18
 
